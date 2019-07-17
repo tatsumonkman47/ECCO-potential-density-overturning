@@ -11,7 +11,7 @@ GM_PSIX_var = "GM_PsiX"
 GM_PSIY_var = "GM_PsiY"
 
 
-def open_combine_raw_ECCO_tile_files(path,VAR,time_slice,grid_path="./ecco_grid/ECCOv4r3_grid.nc",rename_indices=True):
+def open_combine_raw_ECCO_tile_files(path,VAR,time_slice,rename_indices=True):
 	""" Open and combine individual tile files for an xmitgcm dataset and return a complete dataset 
 	will probably remove grid assignment to make this function more general..
 	I am not adding in a grid for now since merging datasets is pretty computationally intensive.
@@ -224,7 +224,7 @@ def merge_bolus_u_bolus_v_into_dataset(time_slice,lat_vals,save=False):
 	bolus_u.load()
 	bolus_v.load()
 
-	# perform finite difference step
+	# perform finite difference step, based on Gael's matlab script..
 	for k in range(0,50):
 	    bolus_u.bolus_uvel[:,:,k,:,:] = (GM_PSIX_ds_plus_extra_k.GM_PsiX[:,:,k,:,:] - GM_PSIX_ds_plus_extra_k.GM_PsiX[:,:,k+1,:,:])/grid.drF[k]
 	    bolus_v.bolus_vvel[:,:,k,:,:] = (GM_PSIY_ds_plus_extra_k.GM_PsiY[:,:,k,:,:] - GM_PSIY_ds_plus_extra_k.GM_PsiY[:,:,k+1,:,:])/grid.drF[k]

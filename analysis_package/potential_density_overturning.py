@@ -15,11 +15,11 @@ from netCDF4 import Dataset
 
 import seawater
 
-from analysis_scripts import plotting_functions
-from analysis_scripts import open_datasets
+from analysis_package import plotting_functions
+from analysis_package import open_datasets
 
-from analysis_scripts import derive_potential_density_values_TEST
-from analysis_scripts import ecco_masks
+from analysis_package import derive_potential_density_values_TEST
+from analysis_package import ecco_masks
 #from analysis_scripts import integrate_on_density_surfaces.py
 
 from importlib import reload

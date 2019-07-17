@@ -14,8 +14,8 @@ from netCDF4 import Dataset
 
 import seawater
 
-import plotting_functions
-import open_datasets
+from analysis_package import plotting_functions
+from analysis_package import open_datasets
 
 time_slice = np.arange(10,20)
 

@@ -14,7 +14,7 @@ from netCDF4 import Dataset
 import seawater
 from seawater.library import T90conv
 
-from analysis_scripts import open_datasets
+from analysis_package import open_datasets
 
 
 
