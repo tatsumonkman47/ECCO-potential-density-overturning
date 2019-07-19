@@ -24,8 +24,7 @@ from analysis_package import ecco_masks
 
 from importlib import reload
 
-data_dir = "./old_nctiles_monthly/"
-uvvel_data_dir = "./nctiles_monthly/"
+data_dir = "./nctiles_monthly/"
 
 UVELMASS_var = "UVELMASS"
 VVELMASS_var = "VVELMASS"
@@ -50,10 +49,10 @@ def perform_potential_density_overturning_calculation(time_slice):
 
 
 	# load data files from central directory
-	UVELMASS_ds_raw = open_datasets.open_combine_raw_ECCO_tile_files(uvvel_data_dir, UVELMASS_var, time_slice)
-	VVELMASS_ds_raw = open_datasets.open_combine_raw_ECCO_tile_files(uvvel_data_dir, VVELMASS_var, time_slice)
-	BOLUS_UVEL_raw = open_datasets.open_combine_raw_ECCO_tile_files(uvvel_data_dir, BOLUS_UVEL_var, time_slice, rename_indices=False)
-	BOLUS_VVEL_raw = open_datasets.open_combine_raw_ECCO_tile_files(uvvel_data_dir, BOLUS_VVEL_var, time_slice, rename_indices=False)
+	UVELMASS_ds_raw = open_datasets.open_combine_raw_ECCO_tile_files(data_dir, UVELMASS_var, time_slice)
+	VVELMASS_ds_raw = open_datasets.open_combine_raw_ECCO_tile_files(data_dir, VVELMASS_var, time_slice)
+	BOLUS_UVEL_raw = open_datasets.open_combine_raw_ECCO_tile_files(data_dir, BOLUS_UVEL_var, time_slice, rename_indices=False)
+	BOLUS_VVEL_raw = open_datasets.open_combine_raw_ECCO_tile_files(data_dir, BOLUS_VVEL_var, time_slice, rename_indices=False)
 	PHIHYD_ds_raw = open_datasets.open_combine_raw_ECCO_tile_files(data_dir, PHIHYD_var_str, time_slice)
 	SALT_ds_raw = open_datasets.open_combine_raw_ECCO_tile_files(data_dir, SALT_var_str, time_slice)
 	THETA_ds_raw = open_datasets.open_combine_raw_ECCO_tile_files(data_dir, THETA_var_str, time_slice)
@@ -101,9 +100,9 @@ def perform_potential_density_overturning_calculation(time_slice):
 	# add padding to either end of the pot. density coordinates
 	# just trying with slightly coarser resolution 
 	#(what pot density resolution is valid in this case?)
-	pot_dens_coord = np.arange(1032.0,1038.1,0.2)
+	pot_dens_coord = np.arange(1032.0,1034.9,0.2)
 
-	#pot_dens_coord = np.concatenate((np.asarray([1000.]),pot_dens_coord, np.arange(1035.0,1038,0.1)))
+	pot_dens_coord = np.concatenate((np.asarray([1000.]),pot_dens_coord, np.arange(1035.0,1038,0.1)))
 
 	# set dimensions based on input dataset with modified vertical level spacing..
 	pot_dens_dims = (len(time_slice),
@@ -144,18 +143,31 @@ def perform_potential_density_overturning_calculation(time_slice):
 	    potdens_stencil_x = potdens_stencil_x_0.cumsum(dim="k") > 0
 	    potdens_stencil_y = potdens_stencil_y_0.cumsum(dim="k") > 0
 	    print("got to checkpoint 0")
-	    # add interpolation..
+
+	    ############################################################################################################
+	    ###########################################     START INTERPOLATION    #####################################
+	    ############################################################################################################
 	    # set end-appended value equal to 1 for subtraction step..
-	    potdens_stencil_x_shifted_up_one_cell = xr.concat((potdens_stencil_x.isel(k=slice(1,50)),potdens_stencil_x.isel(k=49)),dim="k").assign_coords(k=np.arange(0,50))
-	    potdens_stencil_y_shifted_up_one_cell = xr.concat((potdens_stencil_y.isel(k=slice(1,50)),potdens_stencil_y.isel(k=49)),dim="k").assign_coords(k=np.arange(0,50))
-	    potdens_stencil_x_shifted_down_one_cell = xr.concat((potdens_stencil_x.isel(k=0)*0,potdens_stencil_x.isel(k=slice(0,49))),dim="k").assign_coords(k=np.arange(0,50))
-	    potdens_stencil_y_shifted_down_one_cell = xr.concat((potdens_stencil_y.isel(k=0)*0,potdens_stencil_y.isel(k=slice(0,49))),dim="k").assign_coords(k=np.arange(0,50))
+	    potdens_stencil_x_shifted_up_one_cell = xr.concat((potdens_stencil_x.isel(k=slice(1,50)),
+	                                                       potdens_stencil_x.isel(k=49)),
+	                                                      dim="k").assign_coords(k=np.arange(0,50))
+	    potdens_stencil_y_shifted_up_one_cell = xr.concat((potdens_stencil_y.isel(k=slice(1,50)),
+	                                                       potdens_stencil_y.isel(k=49)),
+	                                                      dim="k").assign_coords(k=np.arange(0,50))
+	    potdens_stencil_x_shifted_down_one_cell = xr.concat((potdens_stencil_x.isel(k=0)*0,
+	                                                         potdens_stencil_x.isel(k=slice(0,49))),
+	                                                        dim="k").assign_coords(k=np.arange(0,50))
+	    potdens_stencil_y_shifted_down_one_cell = xr.concat((potdens_stencil_y.isel(k=0)*0,
+	                                                         potdens_stencil_y.isel(k=slice(0,49))),
+	                                                        dim="k").assign_coords(k=np.arange(0,50))
 
 	    potdens_stencil_x_one_above_top_level = potdens_stencil_x_shifted_up_one_cell*1 - potdens_stencil_x*1
 	    potdens_stencil_y_one_above_top_level = potdens_stencil_y_shifted_up_one_cell*1 - potdens_stencil_y*1
 	    # get rid of trailing negative values that occur at the ocean's bottom boundary..
-	    potdens_stencil_x_one_above_top_level = potdens_stencil_x_one_above_top_level.where(potdens_stencil_x_one_above_top_level > 0, other=0)
-	    potdens_stencil_y_one_above_top_level = potdens_stencil_y_one_above_top_level.where(potdens_stencil_y_one_above_top_level > 0, other=0)
+	    potdens_stencil_x_one_above_top_level = potdens_stencil_x_one_above_top_level.where(potdens_stencil_x_one_above_top_level > 0,
+	                                                                                        other=0)
+	    potdens_stencil_y_one_above_top_level = potdens_stencil_y_one_above_top_level.where(potdens_stencil_y_one_above_top_level > 0,
+	                                                                                        other=0)
 
 	    potdens_stencil_x_top_level = potdens_stencil_x*1 - potdens_stencil_x_shifted_down_one_cell*1
 	    potdens_stencil_y_top_level = potdens_stencil_y*1 - potdens_stencil_y_shifted_down_one_cell*1
@@ -164,9 +176,10 @@ def perform_potential_density_overturning_calculation(time_slice):
 	    # 2 IN THE STENCIL.. I eliminated this using "potdens_stencil_x = potdens_stencil_x_0.cumsum(dim="k") > 0" a couple lines above.
 	    potdens_stencil_x_top_level = potdens_stencil_x_top_level.where(potdens_stencil_x_top_level > 0, other=np.nan)
 	    potdens_stencil_y_top_level = potdens_stencil_y_top_level.where(potdens_stencil_y_top_level > 0, other=np.nan)
-	    potdens_stencil_x_one_above_top_level = potdens_stencil_x_one_above_top_level.where(potdens_stencil_x_one_above_top_level > 0, other=np.nan)
-	    potdens_stencil_y_one_above_top_level = potdens_stencil_y_one_above_top_level.where(potdens_stencil_y_one_above_top_level > 0, other=np.nan)
-	    
+	    potdens_stencil_x_one_above_top_level = potdens_stencil_x_one_above_top_level.where(potdens_stencil_x_one_above_top_level > 0,
+	                                                                                        other=np.nan)
+	    potdens_stencil_y_one_above_top_level = potdens_stencil_y_one_above_top_level.where(potdens_stencil_y_one_above_top_level > 0,
+	                                                                                        other=np.nan)
 	    # multiply depth values by -1 to make them positive..
 	    depth_above_x_top_level_raw = (-1*potdens_stencil_x_one_above_top_level.fillna(0)*transport_x.Z).sum(dim="k")
 	    depth_x_top_level_raw = (-1*potdens_stencil_x_top_level.fillna(0)*transport_x.Z).sum(dim="k",skipna=True)
@@ -177,6 +190,16 @@ def perform_potential_density_overturning_calculation(time_slice):
 	    depth_x_top_level = depth_x_top_level_raw.where(depth_x_top_level_raw > 0, other=np.nan)
 	    depth_above_y_top_level = depth_above_y_top_level_raw.where(depth_above_y_top_level_raw > 0, other=np.nan)
 	    depth_y_top_level = depth_y_top_level_raw.where(depth_y_top_level_raw > 0, other=np.nan)
+
+	    thickness_above_x_top_level_raw = (potdens_stencil_x_one_above_top_level.fillna(0)*grid["drF"]).sum(dim="k")
+	    thickness_x_top_level_raw = (potdens_stencil_x_top_level.fillna(0)*grid["drF"]).sum(dim="k")
+	    thickness_above_y_top_level_raw = (potdens_stencil_y_one_above_top_level.fillna(0)*grid["drF"]).sum(dim="k")
+	    thickness_y_top_level_raw = (potdens_stencil_y_top_level.fillna(0)*grid["drF"]).sum(dim="k")
+	    # turn zeros into nans..
+	    thickness_above_x_top_level = thickness_above_x_top_level_raw.where(thickness_above_x_top_level_raw > 0, other=np.nan)
+	    thickness_x_top_level = thickness_x_top_level_raw.where(thickness_x_top_level_raw > 0, other=np.nan)
+	    thickness_above_y_top_level = thickness_above_y_top_level_raw.where(thickness_above_y_top_level_raw > 0, other=np.nan)
+	    thickness_y_top_level = thickness_y_top_level_raw.where(thickness_y_top_level_raw > 0, other=np.nan)    
 	    
 	    potdens_above_x_top_level = (potdens_stencil_x_one_above_top_level.fillna(0)*pot_dens_array_x.fillna(0)).sum(dim="k")
 	    potdens_x_top_level = (potdens_stencil_x_top_level.fillna(0)*pot_dens_array_x.fillna(0)).sum(dim="k")
@@ -194,46 +217,51 @@ def perform_potential_density_overturning_calculation(time_slice):
 	    transport_per_meter_x_top_level = (potdens_stencil_x_top_level.fillna(0)*transport_x/grid["drF"]).sum(dim="k")
 	    transport_per_meter_above_y_top_level = (potdens_stencil_y_one_above_top_level.fillna(0)*transport_y/grid["drF"]).sum(dim="k")
 	    transport_per_meter_y_top_level = (potdens_stencil_y_top_level.fillna(0)*transport_y/grid["drF"]).sum(dim="k")
+	    
+	    transport_per_meter_above_x_top_level = transport_per_meter_above_x_top_level.where(transport_per_meter_above_x_top_level !=0, other=np.nan)    
+	    transport_per_meter_x_top_level = transport_per_meter_x_top_level.where(transport_per_meter_x_top_level != 0, other=np.nan)
+	    transport_per_meter_above_y_top_level = transport_per_meter_above_y_top_level.where(transport_per_meter_above_y_top_level !=0, other=np.nan)
+	    transport_per_meter_y_top_level = transport_per_meter_y_top_level.where(transport_per_meter_y_top_level !=0, other=np.nan)
+	    
+	    depth_potdens_slope_x = (depth_above_x_top_level - depth_x_top_level)/(potdens_above_x_top_level - potdens_x_top_level)                                                         
+	    depth_potdens_slope_y = (depth_above_y_top_level - depth_y_top_level)/(potdens_above_y_top_level - potdens_y_top_level)
 	        
-	    potdens_slope_x = (depth_above_x_top_level - depth_x_top_level)/(potdens_above_x_top_level - potdens_x_top_level)                                                         
-	    potdens_slope_y = (depth_above_y_top_level - depth_y_top_level)/(potdens_above_y_top_level - potdens_y_top_level)
-	        
-	    transport_slope_x = (transport_per_meter_above_x_top_level - transport_per_meter_x_top_level)/(depth_above_x_top_level - depth_x_top_level)
-	    transport_slope_y = (transport_per_meter_above_y_top_level - transport_per_meter_y_top_level)/(depth_above_y_top_level - depth_y_top_level)   
-
+	    #transport_slope_x = (transport_per_meter_above_x_top_level - transport_per_meter_x_top_level)/(depth_above_x_top_level - depth_x_top_level)
+	    #transport_slope_y = (transport_per_meter_above_y_top_level - transport_per_meter_y_top_level)/(depth_above_y_top_level - depth_y_top_level)   
+	    
 	    # this is an issue... need to account for those low desnity protrusions..
-	    h_array_x_0 = (density - potdens_x_top_level)*potdens_slope_x
+	    h_array_x_0 = (density - potdens_x_top_level)*depth_potdens_slope_x
 	    h_array_x = h_array_x_0.where(h_array_x_0 < 0, other=0 )
-	    h_array_y_0 = (density - potdens_y_top_level)*potdens_slope_y 
+	    h_array_y_0 = (density - potdens_y_top_level)*depth_potdens_slope_y 
 	    h_array_y = h_array_y_0.where(h_array_y_0 < 0, other=0 )
 	    print("got to checkpoint 2")
-	    # remember we are integrating from the bottom...
-	    transport_integral_x1 = transport_slope_x*((-1*transport_x.Z.max() - depth_x_top_level - h_array_x)**2) + transport_per_meter_x_top_level*(-h_array_x)
-	    transport_integral_x2 = transport_slope_x*((-1*transport_x.Z.max() - depth_x_top_level)**2)
-
-	    transport_integral_y1 = transport_slope_y*((-1*transport_y.Z.max() - depth_y_top_level - h_array_y)**2) + transport_per_meter_y_top_level*(-h_array_y)
-	    transport_integral_y2 = transport_slope_y*((-1*transport_y.Z.max() - depth_y_top_level)**2)
 	    
-	    transport_integral_x = transport_integral_x1 - transport_integral_x2
-	    transport_integral_x = transport_integral_x.fillna(0)
-	    transport_integral_y = transport_integral_y1 - transport_integral_y2
-	    transport_integral_y = transport_integral_y.fillna(0)
+	    trsp_interpolated_x = ((density - potdens_x_top_level)*depth_potdens_slope_x - thickness_x_top_level/2)*transport_per_meter_above_x_top_level
+	    trsp_interpolated_y = ((density - potdens_y_top_level)*depth_potdens_slope_y - thickness_y_top_level/2)*transport_per_meter_above_y_top_level
 	    
-	    transport_integral_x.load()
-	    transport_integral_y.load()
+	    # "transport_integral_x/y" is the vertical sum of the interpolated grid cell tranposrt
+	    trsp_interpolated_x.load()
+	    trsp_interpolated_y.load()
+	    ############################################################################################################
+	    ###########################################     END INTERPOLATION    #######################################
+	    ############################################################################################################    
 	    
-	    #################################################
-	    
-	    # split the top cell in half since we are putting it into the interpolation..
-	    # but only in cases where there actually is a cell above it
-	    depth_integrated_trsp_x = transport_x*(potdens_stencil_x.fillna(0))#*1 - 0.5*potdens_stencil_x_top_level.fillna(0)*(potdens_stencil_x_one_above_top_level.fillna(0)*1).sum(dim="k",skipna=True))
+	    # split the top cell in half since we are putting it into the interpolation,
+	    # but only in cases where there actually is a cell above it.
+	    depth_integrated_trsp_x = transport_x*(potdens_stencil_x.where(potdens_stencil_x>0,other=np.nan))
 	    depth_integrated_trsp_x.load()
-	    depth_integrated_trsp_x = depth_integrated_trsp_x.sum(dim='k')# + transport_integral_x
+	    depth_integrated_trsp_x = depth_integrated_trsp_x.sum(dim='k') + trsp_interpolated_x.fillna(0)
 	    
-	    depth_integrated_trsp_y = transport_y*(potdens_stencil_y.fillna(0))#*1 - 0.5*potdens_stencil_y_top_level.fillna(0)*(potdens_stencil_y_one_above_top_level.fillna(0)*1).sum(dim="k",skipna=True))
+	    depth_integrated_trsp_y = transport_y*(potdens_stencil_y.where(potdens_stencil_y>0,other=np.nan))
 	    depth_integrated_trsp_y.load()
-	    depth_integrated_trsp_y = depth_integrated_trsp_y.sum(dim='k') #+ transport_integral_y
+	    depth_integrated_trsp_y = depth_integrated_trsp_y.sum(dim='k') + trsp_interpolated_y.fillna(0)
 	    
+	    depth_integrated_trsp_x_no_interp = (transport_x*potdens_stencil_x).sum(dim='k')
+	    depth_integrated_trsp_x_no_interp.load()
+	    depth_integrated_trsp_y_no_interp = (transport_y*potdens_stencil_y).sum(dim='k')
+	    depth_integrated_trsp_y_no_interp.load()
+	                                          
+	                                           
 	    print('starting lat-band filtering')
 	    for lat in lat_vals:
 	        # Compute mask for particular latitude band
@@ -243,17 +271,16 @@ def perform_potential_density_overturning_calculation(time_slice):
 	        # Sum horizontally
 	        lat_trsp_x = (depth_integrated_trsp_x * lat_maskW).sum(dim=['i_g','j','tile'],skipna=True)
 	        lat_trsp_y = (depth_integrated_trsp_y * lat_maskS).sum(dim=['i','j_g','tile'],skipna=True)
-	        lat_trsp_x_interp = (transport_integral_x * lat_maskW).sum(dim=['i_g','j','tile'],skipna=True)
-	        lat_trsp_y_interp = (transport_integral_y * lat_maskS).sum(dim=['i','j_g','tile'],skipna=True)
+	        lat_trsp_x_interp = (trsp_interpolated_x * lat_maskW).sum(dim=['i_g','j','tile'],skipna=True)
+	        lat_trsp_y_interp = (trsp_interpolated_y * lat_maskS).sum(dim=['i','j_g','tile'],skipna=True)
 	        
 	        depth_integrated_pdens_transport_latx.loc[{'lat':lat,'pot_rho':density}] = lat_trsp_x
 	        depth_integrated_pdens_transport_laty.loc[{'lat':lat,'pot_rho':density}] = lat_trsp_y
 	        depth_integrated_x_interp_results.loc[{'lat':lat,'pot_rho':density}] = lat_trsp_x_interp
 	        depth_integrated_y_interp_results.loc[{'lat':lat,'pot_rho':density}] = lat_trsp_y_interp
 
-	        # depth_integrated_pdens_transport.loc[{'lat':lat,'pot_rho':density}] = lat_trsp_y + lat_trsp_x
-	        # depth_integrated_pdens_lat_dict[str(lat)] = lat_trsp_x + lat_trsp_y
 	    print("\n")
+	    
 	    
 	return depth_integrated_pdens_transport_latx, depth_integrated_pdens_transport_laty, depth_integrated_x_interp_results, depth_integrated_y_interp_results
 	# depth_integrated_pdens.to_netcdf("./depth_integrated_pdens_TEST11.nc")
