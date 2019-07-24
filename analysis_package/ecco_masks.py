@@ -35,7 +35,7 @@ def get_basin_masks(maskW, maskS, maskC):
 	# WATCH OUT FOR THIS INDEXING!
 	tile_coords = np.arange(0,13)
 
-	southern_ocean_mask_C = (maskC.where(maskC["lat"] < -32)*0 + 1.)
+	southern_ocean_mask_C = (maskC.where(maskC["lat"] < -33)*0 + 1.)
 	southern_ocean_mask_C = southern_ocean_mask_C.assign_coords(j=j_transport_coords,
 	                                                            i=i_transport_coords,
 	                                                            tile=tile_coords)
