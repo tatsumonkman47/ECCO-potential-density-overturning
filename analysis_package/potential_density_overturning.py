@@ -75,11 +75,6 @@ def perform_potential_density_overturning_calculation(time_slice,basin_maskW,bas
 	# set data file indecies starting from zero.
 	PDENS_ds = PDENS_ds.assign_coords(i=np.arange(0,90),j=np.arange(0,90),k=np.arange(0,50))
 
-	# create masks
-	maskW = (UVELMASS_ds_raw.UVELMASS.isel(k=0,time=1)*0 + 1.)
-	maskS = (VVELMASS_ds_raw.VVELMASS.isel(k=0,time=1)*0 + 1.)
-	maskC = (PDENS_ds.PDENS.isel(k=0,time=0)*0 + 1.)
-
 	cds = grid.coords.to_dataset()
 	grid_xmitgcm = ecco.ecco_utils.get_llc_grid(cds)
 
