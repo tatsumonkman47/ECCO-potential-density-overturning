@@ -45,7 +45,7 @@ grid = xr.open_dataset(grid_path)
 
 
 
-def perform_potential_density_overturning_calculation(time_slice):
+def perform_potential_density_overturning_calculation(time_slice,basin_maskW,basin_maskS):
 
 
 	# load data files from central directory
@@ -80,15 +80,13 @@ def perform_potential_density_overturning_calculation(time_slice):
 	maskS = (VVELMASS_ds_raw.VVELMASS.isel(k=0,time=1)*0 + 1.)
 	maskC = (PDENS_ds.PDENS.isel(k=0,time=0)*0 + 1.)
 
-	southern_ocean_mask_W, southern_ocean_mask_S, so_atl_basin_mask_W, so_atl_basin_mask_S, so_indpac_basin_mask_W, so_indpac_basin_mask_S = ecco_masks.get_basin_masks(maskW, maskS, maskC)
-
 	cds = grid.coords.to_dataset()
 	grid_xmitgcm = ecco.ecco_utils.get_llc_grid(cds)
 
 	transport_x = (UVELMASS_ds_raw["UVELMASS"]*grid["drF"]*grid["dyG"] 
-	               + BOLUS_UVEL_raw["bolus_uvel"]*grid["drF"]*grid["dyG"]*grid["hFacW"])*so_indpac_basin_mask_W
+	               + BOLUS_UVEL_raw["bolus_uvel"]*grid["drF"]*grid["dyG"]*grid["hFacW"])*basin_maskW
 	transport_y = (VVELMASS_ds_raw["VVELMASS"]*grid["drF"]*grid["dxG"] 
-	               + BOLUS_VVEL_raw["bolus_vvel"]*grid["drF"]*grid["dxG"]*grid["hFacS"])*so_indpac_basin_mask_S
+	               + BOLUS_VVEL_raw["bolus_vvel"]*grid["drF"]*grid["dxG"]*grid["hFacS"])*basin_maskS
 
 
 	# create infrastructure for integrating in depth space
@@ -119,8 +117,8 @@ def perform_potential_density_overturning_calculation(time_slice):
 	pot_dens_array = PDENS_ds.PDENS.copy(deep=True)
 
 
-	pot_dens_array_x = pot_dens_array.rename({"i":"i_g"})*so_indpac_basin_mask_W
-	pot_dens_array_y = pot_dens_array.rename({"j":"j_g"})*so_indpac_basin_mask_S
+	pot_dens_array_x = pot_dens_array.rename({"i":"i_g"})*basin_maskW
+	pot_dens_array_y = pot_dens_array.rename({"j":"j_g"})*basin_maskS
 
 	depth_integrated_pdens_transport = xr.DataArray(data=empty_pot_coords_data,coords=new_coords,dims=new_dims)
 	depth_integrated_pdens_transport.load()
