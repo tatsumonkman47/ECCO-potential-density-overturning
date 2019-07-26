@@ -45,35 +45,8 @@ grid = xr.open_dataset(grid_path)
 
 
 
-def perform_potential_density_overturning_calculation(time_slice,basin_maskW,basin_maskS):
-
-
-	# load data files from central directory
-	UVELMASS_ds_raw = open_datasets.open_combine_raw_ECCO_tile_files(data_dir, UVELMASS_var, time_slice)
-	VVELMASS_ds_raw = open_datasets.open_combine_raw_ECCO_tile_files(data_dir, VVELMASS_var, time_slice)
-	BOLUS_UVEL_raw = open_datasets.open_combine_raw_ECCO_tile_files(data_dir, BOLUS_UVEL_var, time_slice, rename_indices=False)
-	BOLUS_VVEL_raw = open_datasets.open_combine_raw_ECCO_tile_files(data_dir, BOLUS_VVEL_var, time_slice, rename_indices=False)
-	PHIHYD_ds_raw = open_datasets.open_combine_raw_ECCO_tile_files(data_dir, PHIHYD_var_str, time_slice)
-	SALT_ds_raw = open_datasets.open_combine_raw_ECCO_tile_files(data_dir, SALT_var_str, time_slice)
-	THETA_ds_raw = open_datasets.open_combine_raw_ECCO_tile_files(data_dir, THETA_var_str, time_slice)
-
-	# set data file indecies starting from zero.
-	UVELMASS_ds_raw = UVELMASS_ds_raw.assign_coords(i_g=np.arange(0,90),j=np.arange(0,90),k=np.arange(0,50))
-	VVELMASS_ds_raw = VVELMASS_ds_raw.assign_coords(i=np.arange(0,90),j_g=np.arange(0,90),k=np.arange(0,50))
-	BOLUS_UVEL_raw = BOLUS_UVEL_raw.assign_coords(i_g=np.arange(0,90),j=np.arange(0,90),k=np.arange(0,50))
-	BOLUS_VVEL_raw = BOLUS_VVEL_raw.assign_coords(i=np.arange(0,90),j_g=np.arange(0,90),k=np.arange(0,50))
-	PHIHYD_ds_raw = PHIHYD_ds_raw.assign_coords(i=np.arange(0,90),j=np.arange(0,90),k=np.arange(0,50))
-	SALT_ds_raw = SALT_ds_raw.assign_coords(i=np.arange(0,90),j=np.arange(0,90),k=np.arange(0,50))
-	THETA_ds_raw = THETA_ds_raw.assign_coords(i=np.arange(0,90),j=np.arange(0,90),k=np.arange(0,50))
-
-	# calculate potential density and in situ pressure
-	PDENS_ds, P_INSITY_ds = derive_potential_density_values_TEST.make_potential_density_dataset(PHIHYD_ds_raw, 
-	                                                                                            SALT_ds_raw, 
-	                                                                                            THETA_ds_raw, 
-	                                                                                            time_slice, 
-	                                                                                            ref_pressure=2000.)
-	# set data file indecies starting from zero.
-	PDENS_ds = PDENS_ds.assign_coords(i=np.arange(0,90),j=np.arange(0,90),k=np.arange(0,50))
+def perform_potential_density_overturning_calculation(time_slice,PDENS_ds,UVELMASS_ds_raw,VVELMASS_ds_raw,
+														BOLUS_UVEL_raw, BOLUS_VVEL_raw, basin_maskW,basin_maskS):
 
 	cds = grid.coords.to_dataset()
 	grid_xmitgcm = ecco.ecco_utils.get_llc_grid(cds)
@@ -110,7 +83,6 @@ def perform_potential_density_overturning_calculation(time_slice,basin_maskW,bas
 
 
 	pot_dens_array = PDENS_ds.PDENS.copy(deep=True)
-
 
 	pot_dens_array_x = pot_dens_array.rename({"i":"i_g"})*basin_maskW
 	pot_dens_array_y = pot_dens_array.rename({"j":"j_g"})*basin_maskS

@@ -104,11 +104,14 @@ def make_potential_density_dataset(PHIHYD_ds_raw, SALT_ds_raw, THETA_ds_raw, tim
                                 			 T90conv(THETA_ds.THETA),
                                 			 P_INSITU_ds.P_INSITU)
 
-	if "time" in PHIHYD_ds:
+	if "time" and "tile" in PHIHYD_ds.dims:
 		TEMP_INSITU_ds["TEMP_INSITU"] = (["tile","time","k","j","i"], insitu_temperature)
-	else:
+	elif "tile" in PHIHYD_ds.dims:
 		TEMP_INSITU_ds["TEMP_INSITU"] = (["tile","k","j","i"], insitu_temperature)
-
+	elif "time" in PHIHYD_ds.dims:
+		TEMP_INSITU_ds["TEMP_INSITU"] = (["time","k","j","i"], insitu_temperature)
+	else:
+		TEMP_INSITU_ds["TEMP_INSITU"] = (["k","j","i"], insitu_temperature)
 	#print("TEMP_INSITU_ds.max(): ", TEMP_INSITU_ds.max(), "degrees C")
 	#print("TEMP_INSITU_ds.min(): ", TEMP_INSITU_ds.min(), "degrees C")
 	# derive potential density
@@ -120,10 +123,15 @@ def make_potential_density_dataset(PHIHYD_ds_raw, SALT_ds_raw, THETA_ds_raw, tim
 	# later...
 	#print("insitu_potential_density.max(): ", insitu_potential_density.max(), " decibars")
 	#print("insitu_potential_density.min(): ", insitu_potential_density.min(), " decibars")
-	if "time" in PHIHYD_ds:
+	if "time" and "tile" in PHIHYD_ds.dims:
 		PDENS_ds["PDENS"] = (["tile","time","k","j","i"], insitu_potential_density)
-	else:
+	elif "tile" in PHIHYD_ds.dims:
 		PDENS_ds["PDENS"] = (["tile","k","j","i"], insitu_potential_density)
+	elif "time" in PHIHYD_ds.dims:
+		PDENS_ds["PDENS"] = (["time","k","j","i"], insitu_potential_density)
+	else:
+		PDENS_ds["PDENS"] = (["k","j","i"], insitu_potential_density)
+
 	fname = None
 	if save == True:
 		fname = "Potential_Density_ts" + str(time_slice[0]) + "_to_" + str(time_slice[-1]) + ".nc"
