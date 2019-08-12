@@ -66,9 +66,9 @@ def perform_potential_density_overturning_calculation(time_slice,PDENS_ds,UVELMA
 	# add padding to either end of the pot. density coordinates
 	# just trying with slightly coarser resolution 
 	#(what pot density resolution is valid in this case?)
-	pot_dens_coord = np.arange(1032.0,1034.9,0.2)
+	pot_dens_coord = np.arange(1032.0,1033.9,0.2)
 
-	pot_dens_coord = np.concatenate((np.asarray([1000.]),pot_dens_coord, np.arange(1035.0,1038,0.1)))
+	pot_dens_coord = np.concatenate((np.asarray([1000.]),pot_dens_coord, np.arange(1034.0,1038,0.1)))
 
 	# set dimensions based on input dataset with modified vertical level spacing..
 	pot_dens_dims = (len(time_slice),
