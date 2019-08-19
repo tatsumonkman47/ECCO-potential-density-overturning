@@ -86,10 +86,6 @@ def make_potential_density_dataset(PHIHYD_ds_raw, SALT_ds_raw, THETA_ds_raw, tim
 	
 	P_INSITU_ds["P_INSITU"] = (PHIHYD_ds["PHIHYD"]*(REFERENCE_DENSITY) + G_ACCELERATION*REFERENCE_DENSITY*PHIHYD_ds["dep"])*PA_TO_DBAR
 
-	# print values to check pressure
-	#print("Max insitu pressure: ", P_INSITU_ds["P_INSITU"].max(), "decibars")
-	#print("Min insitu pressure: ", P_INSITU_ds["P_INSITU"].min(), "decibars")
-	#print("Mean insitu pressure: ", P_INSITU_ds["P_INSITU"].mean(), "decibars")
 
 	TEMP_INSITU_ds = PHIHYD_ds.copy(deep=True)
 	TEMP_INSITU_ds.load()
@@ -121,8 +117,7 @@ def make_potential_density_dataset(PHIHYD_ds_raw, SALT_ds_raw, THETA_ds_raw, tim
 	                                				pr=ref_pressure)
 	# should probably change some of the units and attributes and stuff..
 	# later...
-	#print("insitu_potential_density.max(): ", insitu_potential_density.max(), " decibars")
-	#print("insitu_potential_density.min(): ", insitu_potential_density.min(), " decibars")
+
 	if "time" and "tile" in PHIHYD_ds.dims:
 		PDENS_ds["PDENS"] = (["tile","time","k","j","i"], insitu_potential_density)
 	elif "tile" in PHIHYD_ds.dims:
@@ -142,6 +137,9 @@ def make_potential_density_dataset(PHIHYD_ds_raw, SALT_ds_raw, THETA_ds_raw, tim
 		PDENS_ds.to_netcdf(fname)
 		print("Saved potential density data for timesteps " + str(time_slice[0]) 
 			  + " to " + str(time_slice[-1]) + " to file " + str(fname))
+
+	
+	# interpolate onto west and south faces
 
 	return PDENS_ds, P_INSITU_ds
 
