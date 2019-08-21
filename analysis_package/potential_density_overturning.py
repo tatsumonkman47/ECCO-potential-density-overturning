@@ -79,6 +79,7 @@ def perform_potential_density_overturning_calculation(time_slice,PDENS_U_ds,PDEN
 	new_coords = [time_slice, pot_dens_coord, lat_vals]
 	new_dims = ["time", "pot_rho", "lat"]
 
+	# the potential density values have been interpolated to the edges of the grid cells
 	pot_dens_array_x = PDENS_U_ds.PDENS.copy(deep=True)*basin_maskW
 	pot_dens_array_y = PDENS_V_ds.PDENS.copy(deep=True)*basin_maskS
 
@@ -101,6 +102,7 @@ def perform_potential_density_overturning_calculation(time_slice,PDENS_U_ds,PDEN
 	    potdens_stencil_x_0 = pot_dens_array_x > density
 	    potdens_stencil_y_0 = pot_dens_array_y > density
 	    # this step is critical to remove low density anomalies in the deep ocean from stencil...
+	    # not sure what to do about those, ignoring them for now
 	    potdens_stencil_x = potdens_stencil_x_0.cumsum(dim="k") > 0
 	    potdens_stencil_y = potdens_stencil_y_0.cumsum(dim="k") > 0
 	    print("got to checkpoint 0")
@@ -199,6 +201,8 @@ def perform_potential_density_overturning_calculation(time_slice,PDENS_U_ds,PDEN
 	    half_thickness_x_one_above_top_level = (potdens_stencil_x_one_above_top_level.fillna(0)*grid.drF/2.).sum(dim="k")
 	    half_thickness_y_one_above_top_level = (potdens_stencil_y_one_above_top_level.fillna(0)*grid.drF/2.).sum(dim="k")
 	    
+	    # "overshoot" is how high the density level protrudes into the cell above the top stencil cell, if it is higher
+	    # "undershoot" is how low the density level is below the top of the top stencil cell, if it is lower
 	    overshoot_x_0 = h_array_x - half_thickness_x_top_level
 	    overshoot_x = overshoot_x_0.where(overshoot_x_0 > 0).fillna(0)
 	    undershoot_x = overshoot_x_0.where(overshoot_x_0 <= 0).fillna(0)
@@ -218,7 +222,7 @@ def perform_potential_density_overturning_calculation(time_slice,PDENS_U_ds,PDEN
 	    
 	    # "transport_integral_x/y" is the vertical sum of the interpolated grid cell tranposrt
 	    trsp_interpolated_x.load()
-	    trsp_interpolated_y.load()g
+	    trsp_interpolated_y.load()
 	    ############################################################################################################
 	    ###########################################     END INTERPOLATION    #######################################
 	    ############################################################################################################    
@@ -227,11 +231,12 @@ def perform_potential_density_overturning_calculation(time_slice,PDENS_U_ds,PDEN
 	    # but only in cases where there actually is a cell above it.
 	    depth_integrated_trsp_x = transport_x*(potdens_stencil_x.where(potdens_stencil_x>0,other=np.nan))
 	    depth_integrated_trsp_x.load()
-	    depth_integrated_trsp_x = depth_integrated_trsp_x.sum(dim='k') + trsp_interpolated_x.fillna(0)
+	    # I added the negative sign because the sign of the interpolated values and the depth integrated transport weren't agreeing..
+	    depth_integrated_trsp_x = depth_integrated_trsp_x.sum(dim='k') - trsp_interpolated_x.fillna(0)
 	    
 	    depth_integrated_trsp_y = transport_y*(potdens_stencil_y.where(potdens_stencil_y>0,other=np.nan))
 	    depth_integrated_trsp_y.load()
-	    depth_integrated_trsp_y = depth_integrated_trsp_y.sum(dim='k') + trsp_interpolated_y.fillna(0)
+	    depth_integrated_trsp_y = depth_integrated_trsp_y.sum(dim='k') - trsp_interpolated_y.fillna(0)
 	    
 	    depth_integrated_trsp_x_no_interp = (transport_x*potdens_stencil_x).sum(dim='k')
 	    depth_integrated_trsp_x_no_interp.load()
