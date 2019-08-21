@@ -349,7 +349,7 @@ def overturning_output_plots(depth_integrated_pdens_transport_latx, depth_integr
 	#vmin = depth_integrated_pdens_transport.min()
 	#vmax = depth_integrated_pdens_transport.max()
 	plt.contourf(depth_integrated_pdens_transport_laty.lat[min_lat:max_lat],
-	             pot_dens_coord[1:],
+	             depth_integrated_pdens_transport_laty.pot_rho[1:],
 	             -1*depth_integrated_pdens_transport_laty.mean(dim='time')[1:,min_lat:max_lat]-1*depth_integrated_pdens_transport_latx.mean(dim='time')[1:,min_lat:max_lat],
 	             30,
 	             cmap='bwr',
@@ -364,12 +364,11 @@ def overturning_output_plots(depth_integrated_pdens_transport_latx, depth_integr
 	plt.grid()
 	plt.gca().invert_yaxis()
 	plt.savefig("./figures/"+basin_name+"_overturning_with_interp"+str(time_slice[0])+"to"+str(time_slice[-1])+".png")
-	plt.show()
 	plt.close()
 
 	plt.figure(figsize=(20,10))
 	plt.contourf(depth_integrated_pdens_transport_laty.lat[min_lat:max_lat],
-	             pot_dens_coord[1:],
+	             depth_integrated_pdens_transport_laty.pot_rho[1:],
 	             -1*depth_integrated_pdens_transport_latx.mean(dim='time')[1:,min_lat:max_lat] -1*depth_integrated_pdens_transport_laty.mean(dim='time')[1:,min_lat:max_lat]    
 	             -(-1*depth_integrated_x_interp_results.mean(dim='time')[1:,min_lat:max_lat]-1*depth_integrated_y_interp_results.mean(dim='time')[1:,min_lat:max_lat]),
 	             30,
@@ -384,13 +383,12 @@ def overturning_output_plots(depth_integrated_pdens_transport_latx, depth_integr
 	plt.grid()
 	plt.gca().invert_yaxis()
 	plt.savefig("./figures/"+basin_name+"_overturning_NO_interp"+str(time_slice[0])+"to"+str(time_slice[-1])+".png")
-	plt.show()
 	plt.close()
 
 
 	plt.figure(figsize=(20,10))
 	plt.contourf(depth_integrated_pdens_transport_laty.lat[min_lat:max_lat],
-	             pot_dens_coord[1:],
+	             depth_integrated_pdens_transport_laty.pot_rho[1:],
 	             -(-1*depth_integrated_x_interp_results.mean(dim='time')[1:,min_lat:max_lat]-1*depth_integrated_y_interp_results.mean(dim='time')[1:,min_lat:max_lat]),
 	             30,
 	             cmap='bwr',
@@ -404,5 +402,4 @@ def overturning_output_plots(depth_integrated_pdens_transport_latx, depth_integr
 	plt.grid()
 	plt.gca().invert_yaxis()
 	plt.savefig("./figures/"+basin_name+"_overturning_interp_Correction"+str(time_slice[0])+"to"+str(time_slice[-1])+".png")
-	plt.show()
 	plt.close()

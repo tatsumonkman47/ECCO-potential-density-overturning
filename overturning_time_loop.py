@@ -30,7 +30,9 @@ SALT_var_str = "SALT"
 # THETA: potential pressure (C)
 THETA_var_str = "THETA"
 # PDENS
-PDENS_var_str = "PDENS"
+PDENS_U_var_str = "PDENS_U"
+# PDENS
+PDENS_V_var_str = "PDENS_V"
 
 grid_path = "./ecco_grid/ECCOv4r3_grid.nc"
 grid = xr.open_dataset(grid_path)
@@ -54,16 +56,23 @@ for t_slice in time_slice:
     VVELMASS_ds_raw = open_datasets.open_combine_raw_ECCO_tile_files(data_dir, VVELMASS_var, t_slice)
     BOLUS_UVEL_raw = open_datasets.open_combine_raw_ECCO_tile_files(data_dir, BOLUS_UVEL_var, t_slice, rename_indices=False)
     BOLUS_VVEL_raw = open_datasets.open_combine_raw_ECCO_tile_files(data_dir, BOLUS_VVEL_var, t_slice, rename_indices=False)
-    PDENS_ds = open_datasets.open_combine_raw_ECCO_tile_files(data_dir, PDENS_var_str, t_slice,rename_indices=False)
 
     # set data file indecies starting from zero.
-    UVELMASS_ds_raw = UVELMASS_ds_raw.assign_coords(i_g=np.arange(0,90),j=np.arange(0,90),k=np.arange(0,50))
-    VVELMASS_ds_raw = VVELMASS_ds_raw.assign_coords(i=np.arange(0,90),j_g=np.arange(0,90),k=np.arange(0,50))
-    BOLUS_UVEL_raw = BOLUS_UVEL_raw.assign_coords(i_g=np.arange(0,90),j=np.arange(0,90),k=np.arange(0,50))
-    BOLUS_VVEL_raw = BOLUS_VVEL_raw.assign_coords(i=np.arange(0,90),j_g=np.arange(0,90),k=np.arange(0,50))
-    PDENS_ds = PDENS_ds.assign_coords(i=np.arange(0,90),j=np.arange(0,90),k=np.arange(0,50))
+    UVELMASS_ds_raw = UVELMASS_ds_raw.assign_coords(i_g=np.arange(0,90),j=np.arange(0,90),k=np.arange(0,50),time=t_slice)
+    VVELMASS_ds_raw = VVELMASS_ds_raw.assign_coords(i=np.arange(0,90),j_g=np.arange(0,90),k=np.arange(0,50),time=t_slice)
+    BOLUS_UVEL_raw = BOLUS_UVEL_raw.assign_coords(i_g=np.arange(0,90),j=np.arange(0,90),k=np.arange(0,50),time=t_slice)
+    BOLUS_VVEL_raw = BOLUS_VVEL_raw.assign_coords(i=np.arange(0,90),j_g=np.arange(0,90),k=np.arange(0,50),time=t_slice)
+    #PDENS_ds = PDENS_ds.assign_coords(i=np.arange(0,90),j=np.arange(0,90),k=np.arange(0,50))
+    # calculate potential density and in situ pressure
+    PDENS_U_ds_raw = open_datasets.open_combine_raw_ECCO_tile_files(data_dir,PDENS_U_var_str,t_slice,rename_indices=False)
+    # set data file indecies starting from zero.
+    PDENS_U_ds = PDENS_U_ds_raw.assign_coords(i_g=np.arange(0,90),j=np.arange(0,90),k=np.arange(0,50))
+    # calculate potential density and in situ pressure
+    PDENS_V_ds_raw = open_datasets.open_combine_raw_ECCO_tile_files(data_dir,PDENS_V_var_str,t_slice,rename_indices=False)
+    # set data file indecies starting from zero.
+    PDENS_V_ds = PDENS_V_ds_raw.assign_coords(i=np.arange(0,90),j_g=np.arange(0,90),k=np.arange(0,50))
 
-    dint_latx, dint_laty, dint_interp_latx, dint_interp_laty = potential_density_overturning.perform_potential_density_overturning_calculation(t_slice,PDENS_ds,UVELMASS_ds_raw,VVELMASS_ds_raw,
+    dint_latx, dint_laty, dint_interp_latx, dint_interp_laty = potential_density_overturning.perform_potential_density_overturning_calculation(t_slice,PDENS_U_ds,PDENS_V_ds,UVELMASS_ds_raw,VVELMASS_ds_raw,
                                                                                                                                                BOLUS_UVEL_raw, BOLUS_VVEL_raw, 
                                                                                                                                                so_atl_basin_mask_W,so_atl_basin_mask_S)
     dint_latx.to_netcdf("./overturning_output/atl_so_depth_integrated_pdens_transport_latx_"+str(t_slice[0])+"_to_"+str(t_slice[-1])+".nc")
@@ -72,7 +81,7 @@ for t_slice in time_slice:
     dint_interp_laty.to_netcdf("./overturning_output/atl_so_depth_integrated_y_interp_results_"+str(t_slice[0])+"_to_"+str(t_slice[-1])+".nc")
     plotting_functions.overturning_output_plots(dint_latx, dint_laty, dint_interp_latx,dint_interp_laty,t_slice,"atl_so")
     
-    dint_latx, dint_laty, dint_interp_latx, dint_interp_laty = potential_density_overturning.perform_potential_density_overturning_calculation(t_slice,PDENS_ds,UVELMASS_ds_raw,VVELMASS_ds_raw,
+    dint_latx, dint_laty, dint_interp_latx, dint_interp_laty = potential_density_overturning.perform_potential_density_overturning_calculation(t_slice,PDENS_U_ds,PDENS_V_ds,UVELMASS_ds_raw,VVELMASS_ds_raw,
                                                                                                                                                BOLUS_UVEL_raw, BOLUS_VVEL_raw,
                                                                                                                                                so_indpac_basin_mask_W,so_indpac_basin_mask_S)
     dint_latx.to_netcdf("./overturning_output/indpac_so_depth_integrated_pdens_transport_latx_"+str(t_slice[0])+"_to_"+str(t_slice[-1])+".nc")
@@ -81,14 +90,8 @@ for t_slice in time_slice:
     dint_interp_laty.to_netcdf("./overturning_output/indpac_so_depth_integrated_y_interp_results_"+str(t_slice[0])+"_to_"+str(t_slice[-1])+".nc")
     plotting_functions.overturning_output_plots(dint_latx, dint_laty,dint_interp_latx,dint_interp_laty,t_slice,"indpac_so")
     
-    dint_latx, dint_laty, dint_interp_latx, dint_interp_laty = potential_density_overturning.perform_potential_density_overturning_calculation(t_slice,PDENS_ds,UVELMASS_ds_raw,VVELMASS_ds_raw,
+    dint_latx, dint_laty, dint_interp_latx, dint_interp_laty = potential_density_overturning.perform_potential_density_overturning_calculation(t_slice,PDENS_U_ds,PDENS_V_ds,UVELMASS_ds_raw,VVELMASS_ds_raw,
                                                                                                                                                BOLUS_UVEL_raw, BOLUS_VVEL_raw,
-                                                                                                                                               southern_ocean_mask_W,southern_ocean_mask_S)
-    dint_latx.to_netcdf("./overturning_output/indpac_so_depth_integrated_pdens_transport_latx_"+str(t_slice[0])+"_to_"+str(t_slice[-1])+".nc")
-    dint_laty.to_netcdf("./overturning_output/indpac_so_depth_integrated_pdens_transport_laty_"+str(t_slice[0])+"_to_"+str(t_slice[-1])+".nc")
-    dint_interp_latx.to_netcdf("./overturning_output/indpac_so_depth_integrated_x_interp_results_"+str(t_slice[0])+"_to_"+str(t_slice[-1])+".nc")
-    dint_interp_laty.to_netcdf("./overturning_output/indpac_so_depth_integrated_y_interp_results_"+str(t_slice[0])+"_to_"+str(t_slice[-1])+".nc")
-    plotting_functions.overturning_output_plots(dint_latx, dint_laty,dint_interp_latx,dint_interp_laty,t_slice,"so")
-    
+                                                                                                                                               southern_ocean_mask_W,southern_ocean_mask_S)    
     
     print()

@@ -45,7 +45,7 @@ grid = xr.open_dataset(grid_path)
 
 
 
-def perform_potential_density_overturning_calculation(time_slice,PDENS_ds,UVELMASS_ds_raw,VVELMASS_ds_raw,
+def perform_potential_density_overturning_calculation(time_slice,PDENS_U_ds,PDENS_V_ds,UVELMASS_ds_raw,VVELMASS_ds_raw,
 														BOLUS_UVEL_raw, BOLUS_VVEL_raw, basin_maskW,basin_maskS):
 
 	cds = grid.coords.to_dataset()
@@ -55,7 +55,6 @@ def perform_potential_density_overturning_calculation(time_slice,PDENS_ds,UVELMA
 	               + BOLUS_UVEL_raw["bolus_uvel"]*grid["drF"]*grid["dyG"]*grid["hFacW"])*basin_maskW
 	transport_y = (VVELMASS_ds_raw["VVELMASS"]*grid["drF"]*grid["dxG"] 
 	               + BOLUS_VVEL_raw["bolus_vvel"]*grid["drF"]*grid["dxG"]*grid["hFacS"])*basin_maskS
-
 
 	# create infrastructure for integrating in depth space
 
@@ -77,15 +76,13 @@ def perform_potential_density_overturning_calculation(time_slice,PDENS_ds,UVELMA
 
 	empty_pot_coords_data = np.zeros(pot_dens_dims)
 	# trying to make this as general as possible, but need to keep an eye on this..
-	new_coords = [time_slice+1, pot_dens_coord, lat_vals]
+	new_coords = [time_slice, pot_dens_coord, lat_vals]
 	new_dims = ["time", "pot_rho", "lat"]
 
+	pot_dens_array_x = PDENS_U_ds.PDENS.copy(deep=True)*basin_maskW
+	pot_dens_array_y = PDENS_V_ds.PDENS.copy(deep=True)*basin_maskS
 
 
-	pot_dens_array = PDENS_ds.PDENS.copy(deep=True)
-
-	pot_dens_array_x = pot_dens_array.rename({"i":"i_g"})*basin_maskW
-	pot_dens_array_y = pot_dens_array.rename({"j":"j_g"})*basin_maskS
 
 	depth_integrated_pdens_transport = xr.DataArray(data=empty_pot_coords_data,coords=new_coords,dims=new_dims)
 	depth_integrated_pdens_transport.load()
@@ -98,7 +95,6 @@ def perform_potential_density_overturning_calculation(time_slice,PDENS_ds,UVELMA
 	depth_integrated_x_interp_results.load()
 	depth_integrated_y_interp_results = depth_integrated_pdens_transport.copy(deep=True)
 	depth_integrated_y_interp_results.load()
-
 
 	for density in pot_dens_coord:
 	    print("Started " + str(density) + " surface for time slice " + str(time_slice)) 
@@ -178,31 +174,47 @@ def perform_potential_density_overturning_calculation(time_slice,PDENS_ds,UVELMA
 	    
 	    print("got to checkpoint 1")
 	    # need to calculate transport per m so divide by cell thickness
-	    transport_per_meter_above_x_top_level = (potdens_stencil_x_one_above_top_level.fillna(0)*transport_x/grid["drF"]).sum(dim="k")
-	    transport_per_meter_x_top_level = (potdens_stencil_x_top_level.fillna(0)*transport_x/grid["drF"]).sum(dim="k")
-	    transport_per_meter_above_y_top_level = (potdens_stencil_y_one_above_top_level.fillna(0)*transport_y/grid["drF"]).sum(dim="k")
-	    transport_per_meter_y_top_level = (potdens_stencil_y_top_level.fillna(0)*transport_y/grid["drF"]).sum(dim="k")
+	    transport_above_x_top_level = (potdens_stencil_x_one_above_top_level.fillna(0)*transport_x).sum(dim="k")
+	    transport_x_top_level = (potdens_stencil_x_top_level.fillna(0)*transport_x).sum(dim="k")
+	    transport_above_y_top_level = (potdens_stencil_y_one_above_top_level.fillna(0)*transport_y).sum(dim="k")
+	    transport_y_top_level = (potdens_stencil_y_top_level.fillna(0)*transport_y).sum(dim="k")
 	    
-	    transport_per_meter_above_x_top_level = transport_per_meter_above_x_top_level.where(transport_per_meter_above_x_top_level !=0, other=np.nan)    
-	    transport_per_meter_x_top_level = transport_per_meter_x_top_level.where(transport_per_meter_x_top_level != 0, other=np.nan)
-	    transport_per_meter_above_y_top_level = transport_per_meter_above_y_top_level.where(transport_per_meter_above_y_top_level !=0, other=np.nan)
-	    transport_per_meter_y_top_level = transport_per_meter_y_top_level.where(transport_per_meter_y_top_level !=0, other=np.nan)
+	    transport_above_x_top_level = transport_above_x_top_level.where(transport_above_x_top_level !=0, other=np.nan)    
+	    transport_x_top_level = transport_x_top_level.where(transport_x_top_level != 0, other=np.nan)
+	    transport_above_y_top_level = transport_above_y_top_level.where(transport_above_y_top_level !=0, other=np.nan)
+	    transport_y_top_level = transport_y_top_level.where(transport_y_top_level !=0, other=np.nan)
 	    
 	    depth_potdens_slope_x = (depth_above_x_top_level - depth_x_top_level)/(potdens_above_x_top_level - potdens_x_top_level)                                                         
 	    depth_potdens_slope_y = (depth_above_y_top_level - depth_y_top_level)/(potdens_above_y_top_level - potdens_y_top_level)
 	        
-	    #transport_slope_x = (transport_per_meter_above_x_top_level - transport_per_meter_x_top_level)/(depth_above_x_top_level - depth_x_top_level)
-	    #transport_slope_y = (transport_per_meter_above_y_top_level - transport_per_meter_y_top_level)/(depth_above_y_top_level - depth_y_top_level)   
-	    
 	    # this is an issue... need to account for those low desnity protrusions..
 	    h_array_x_0 = (density - potdens_x_top_level)*depth_potdens_slope_x
-	    h_array_x = h_array_x_0.where(h_array_x_0 < 0, other=0 )
+	    h_array_x = h_array_x_0.where(h_array_x_0 < 0, other=0 )*-1
 	    h_array_y_0 = (density - potdens_y_top_level)*depth_potdens_slope_y 
-	    h_array_y = h_array_y_0.where(h_array_y_0 < 0, other=0 )
-	    print("got to checkpoint 2")
+	    h_array_y = h_array_y_0.where(h_array_y_0 < 0, other=0 )*-1
 	    
-	    trsp_interpolated_x = ((density - potdens_x_top_level)*depth_potdens_slope_x - thickness_x_top_level/2)*transport_per_meter_above_x_top_level
-	    trsp_interpolated_y = ((density - potdens_y_top_level)*depth_potdens_slope_y - thickness_y_top_level/2)*transport_per_meter_above_y_top_level
+	    print("got to checkpoint 2")
+	    half_thickness_x_top_level = (potdens_stencil_x_top_level.fillna(0)*grid.drF/2.).sum(dim="k")
+	    half_thickness_y_top_level = (potdens_stencil_y_top_level.fillna(0)*grid.drF/2.).sum(dim="k")
+	    half_thickness_x_one_above_top_level = (potdens_stencil_x_one_above_top_level.fillna(0)*grid.drF/2.).sum(dim="k")
+	    half_thickness_y_one_above_top_level = (potdens_stencil_y_one_above_top_level.fillna(0)*grid.drF/2.).sum(dim="k")
+	    
+	    overshoot_x_0 = h_array_x - half_thickness_x_top_level
+	    overshoot_x = overshoot_x_0.where(overshoot_x_0 > 0).fillna(0)
+	    undershoot_x = overshoot_x_0.where(overshoot_x_0 <= 0).fillna(0)
+	    overshoot_y_0 = h_array_y - half_thickness_y_top_level
+	    overshoot_y = overshoot_y_0.where(overshoot_y_0 > 0).fillna(0)
+	    undershoot_y = overshoot_y_0.where(overshoot_y_0 <= 0).fillna(0)
+	    
+	    # remember we are interpolating from the center of the top cell
+	    percent_top_filled_x = (half_thickness_x_top_level + undershoot_x)/(half_thickness_x_top_level*2)
+	    percent_top_filled_y = (half_thickness_y_top_level + undershoot_y)/(half_thickness_y_top_level*2)
+	    
+	    percent_one_above_top_filled_x = overshoot_x/(half_thickness_x_one_above_top_level*2)
+	    percent_one_above_top_filled_y = overshoot_y/(half_thickness_y_one_above_top_level*2)  
+	    
+	    trsp_interpolated_x = (percent_top_filled_x*transport_x_top_level).fillna(0) + (percent_one_above_top_filled_x*transport_above_x_top_level).fillna(0)
+	    trsp_interpolated_y = (percent_top_filled_y*transport_y_top_level).fillna(0) + (percent_one_above_top_filled_y*transport_above_y_top_level).fillna(0)
 	    
 	    # "transport_integral_x/y" is the vertical sum of the interpolated grid cell tranposrt
 	    trsp_interpolated_x.load()
