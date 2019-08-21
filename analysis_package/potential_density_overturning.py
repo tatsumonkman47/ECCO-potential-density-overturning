@@ -218,7 +218,7 @@ def perform_potential_density_overturning_calculation(time_slice,PDENS_U_ds,PDEN
 	    
 	    # "transport_integral_x/y" is the vertical sum of the interpolated grid cell tranposrt
 	    trsp_interpolated_x.load()
-	    trsp_interpolated_y.load()
+	    trsp_interpolated_y.load()g
 	    ############################################################################################################
 	    ###########################################     END INTERPOLATION    #######################################
 	    ############################################################################################################    
