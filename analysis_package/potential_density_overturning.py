@@ -47,6 +47,17 @@ grid = xr.open_dataset(grid_path)
 
 def perform_potential_density_overturning_calculation(time_slice,PDENS_U_ds,PDENS_V_ds,UVELMASS_ds_raw,VVELMASS_ds_raw,
 														BOLUS_UVEL_raw, BOLUS_VVEL_raw, basin_maskW,basin_maskS):
+	""" 
+
+	Parameters
+	----------
+	
+
+	Returns
+	_______
+	
+	"""
+
 
 	cds = grid.coords.to_dataset()
 	grid_xmitgcm = ecco.ecco_utils.get_llc_grid(cds)
@@ -229,14 +240,13 @@ def perform_potential_density_overturning_calculation(time_slice,PDENS_U_ds,PDEN
 	    
 	    # split the top cell in half since we are putting it into the interpolation,
 	    # but only in cases where there actually is a cell above it.
-	    depth_integrated_trsp_x = transport_x*(potdens_stencil_x.where(potdens_stencil_x>0,other=np.nan))
+	    depth_integrated_trsp_x = transport_x*(potdens_stencil_x.where(potdens_stencil_x>0,other=np.nan)) - (transport_x*potdens_stencil_x_top_level/2.).fillna(0)
 	    depth_integrated_trsp_x.load()
-	    # I added the negative sign because the sign of the interpolated values and the depth integrated transport weren't agreeing..
-	    depth_integrated_trsp_x = depth_integrated_trsp_x.sum(dim='k') - trsp_interpolated_x.fillna(0)
+	    depth_integrated_trsp_x = depth_integrated_trsp_x.sum(dim='k') + trsp_interpolated_x.fillna(0)
 	    
-	    depth_integrated_trsp_y = transport_y*(potdens_stencil_y.where(potdens_stencil_y>0,other=np.nan))
+	    depth_integrated_trsp_y = transport_y*(potdens_stencil_y.where(potdens_stencil_y>0,other=np.nan)) - (transport_y*potdens_stencil_y_top_level/2.).fillna(0)
 	    depth_integrated_trsp_y.load()
-	    depth_integrated_trsp_y = depth_integrated_trsp_y.sum(dim='k') - trsp_interpolated_y.fillna(0)
+	    depth_integrated_trsp_y = depth_integrated_trsp_y.sum(dim='k') + trsp_interpolated_y.fillna(0)
 	    
 	    depth_integrated_trsp_x_no_interp = (transport_x*potdens_stencil_x).sum(dim='k')
 	    depth_integrated_trsp_x_no_interp.load()
