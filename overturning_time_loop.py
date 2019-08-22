@@ -92,6 +92,11 @@ for t_slice in time_slice:
     
     dint_latx, dint_laty, dint_interp_latx, dint_interp_laty = potential_density_overturning.perform_potential_density_overturning_calculation(t_slice,PDENS_U_ds,PDENS_V_ds,UVELMASS_ds_raw,VVELMASS_ds_raw,
                                                                                                                                                BOLUS_UVEL_raw, BOLUS_VVEL_raw,
-                                                                                                                                               southern_ocean_mask_W,southern_ocean_mask_S)    
-    
+                                                                                                                                               maskW,maskS)    
+    dint_latx.to_netcdf("./overturning_output/global_depth_integrated_pdens_transport_latx_"+str(t_slice[0])+"_to_"+str(t_slice[-1])+".nc")
+    dint_laty.to_netcdf("./overturning_output/global_depth_integrated_pdens_transport_laty_"+str(t_slice[0])+"_to_"+str(t_slice[-1])+".nc")
+    dint_interp_latx.to_netcdf("./overturning_output/global_depth_integrated_x_interp_results_"+str(t_slice[0])+"_to_"+str(t_slice[-1])+".nc")
+    dint_interp_laty.to_netcdf("./overturning_output/global_depth_integrated_y_interp_results_"+str(t_slice[0])+"_to_"+str(t_slice[-1])+".nc")
+    plotting_functions.overturning_output_plots(dint_latx, dint_laty,dint_interp_latx,dint_interp_laty,t_slice,"global")
+   
     print()
