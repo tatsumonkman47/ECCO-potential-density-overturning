@@ -46,7 +46,7 @@ maskC = xr.open_dataarray("generic_masks/maskC.nc")
 southern_ocean_mask_W, southern_ocean_mask_S, so_atl_basin_mask_W, so_atl_basin_mask_S, so_indpac_basin_mask_W, so_indpac_basin_mask_S = ecco_masks.get_basin_masks(maskW, maskS, maskC)
 
 time_slice = []
-for i in range(0,24):
+for i in range(0,3):
     time_slice.append(np.arange(i*12,(i+1)*12))
 
 for t_slice in time_slice:
