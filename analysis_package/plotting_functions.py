@@ -213,13 +213,16 @@ def world_east_vel_plot(uveldataset, vveldataset, label_tiles=True,ticks_on=Fals
 		ax12.tick_params(tick1On=False,tick2On=False,labelleft=False,labelbottom=False)
 
 	fig.subplots_adjust(right=0.8)
-	cb_ax = fig.add_axes([0.83, 0.1, 0.02, 0.8])
-
+	cb_ax = fig.add_axes([0.83, 0.12, 0.02, 0.75])
+	plt.subplots_adjust(top=0.93)
 	# I chose tile 8 since I don't know how to manually adjust the colorbar...
-	cbar = fig.colorbar(im12,cax=cb_ax)
-	fig.suptitle("longitudinal velocity plot", fontsize=16)
-
-	# return the plot object..
+	cbar = fig.colorbar(im1,cax=cb_ax)
+	cbar.ax.get_yaxis().labelpad = 18
+	cbar.ax.tick_params(labelsize=15) 
+	if title != None:
+		plt.suptitle(title,fontsize=35)
+	if cbar_title != None:
+		cbar.set_label(cbar_title,fontsize=25,rotation=270)
 	return plt 
 
 
