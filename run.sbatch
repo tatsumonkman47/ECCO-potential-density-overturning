@@ -1,0 +1,12 @@
+#!/bin/bash
+#SBATCH --job-name=Tatsu-ECCO-GOC-AMOC-IPMOC
+#SBATCH --output=Tatsu-ECCO-GOC-AMOC-IPMOC.out
+#SBATCH --error=Tatsu-ECCO-GOC-AMOC-IPMOC.err
+#SBATCH --time=1:00:00
+#SBATCH --account=pi-mfj
+#SBATCH --partition=mfj
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=28
+#SBATCH --mem-per-cpu=2000
+
+python overturning_time_loop.py

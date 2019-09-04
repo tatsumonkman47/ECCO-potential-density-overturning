@@ -36,6 +36,7 @@ PDENS_V_var_str = "PDENS_V"
 
 grid_path = "./ecco_grid/ECCOv4r3_grid.nc"
 grid = xr.open_dataset(grid_path)
+print("loaded grid")
 
 # make sure to use the "open_dataarray" command instead of open "open_dataset" 
 # or xarray will read in the file incorrectly
@@ -44,6 +45,7 @@ maskW = xr.open_dataarray("generic_masks/maskW.nc")
 maskS = xr.open_dataarray("generic_masks/maskS.nc")
 maskC = xr.open_dataarray("generic_masks/maskC.nc")
 southern_ocean_mask_W, southern_ocean_mask_S, so_atl_basin_mask_W, so_atl_basin_mask_S, so_indpac_basin_mask_W, so_indpac_basin_mask_S = ecco_masks.get_basin_masks(maskW, maskS, maskC)
+print("loaded basin masks")
 
 time_slice = []
 for i in range(0,24):
