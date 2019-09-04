@@ -46,7 +46,7 @@ grid = xr.open_dataset(grid_path)
 
 
 def perform_potential_density_overturning_calculation(time_slice,PDENS_U_ds,PDENS_V_ds,UVELMASS_ds_raw,VVELMASS_ds_raw,
-														GM_PSIX, GM_PSIY, basin_maskW,basin_maskS):
+														GM_PSIX, GM_PSIY):
 	""" 
 
 	Parameters
@@ -57,6 +57,13 @@ def perform_potential_density_overturning_calculation(time_slice,PDENS_U_ds,PDEN
 	_______
 	
 	"""
+
+	maskW = xr.open_dataarray("generic_masks/maskW.nc")
+	maskS = xr.open_dataarray("generic_masks/maskS.nc")
+	maskC = xr.open_dataarray("generic_masks/maskC.nc")
+	southern_ocean_mask_W, southern_ocean_mask_S, so_atl_basin_mask_W, so_atl_basin_mask_S, so_indpac_basin_mask_W, so_indpac_basin_mask_S = ecco_masks.get_basin_masks(maskW, maskS, maskC)
+	print("loaded basin masks")
+
 
 
 	cds = grid.coords.to_dataset()
@@ -89,29 +96,29 @@ def perform_potential_density_overturning_calculation(time_slice,PDENS_U_ds,PDEN
 	new_dims = ["time", "pot_rho", "lat"]
 
 	# the potential density values have been interpolated to the edges of the grid cells
-	pot_dens_array_x = PDENS_U_ds.PDENS.copy(deep=True)*basin_maskW
-	pot_dens_array_y = PDENS_V_ds.PDENS.copy(deep=True)*basin_maskS
+	pot_dens_array_x = PDENS_U_ds.PDENS.copy(deep=True)#*basin_maskW
+	pot_dens_array_y = PDENS_V_ds.PDENS.copy(deep=True)#*basin_maskS
 
-	bolus_trsp_x = (GM_PSIX.fillna(0)*grid["dyG"]*grid["hFacW"])*basin_maskW
-	bolus_trsp_y = (GM_PSIY.fillna(0)*grid["dxG"]*grid["hFacS"])*basin_maskS
+	bolus_trsp_x = (GM_PSIX.fillna(0)*grid["dyG"]*grid["hFacW"])#*basin_maskW
+	bolus_trsp_y = (GM_PSIY.fillna(0)*grid["dxG"]*grid["hFacS"])#*basin_maskS
 
 	depth_integrated_pdens_transport = xr.DataArray(data=empty_pot_coords_data,coords=new_coords,dims=new_dims)
 	depth_integrated_pdens_transport.load()
-	depth_integrated_pdens_transport_latx = depth_integrated_pdens_transport.copy(deep=True)
-	depth_integrated_pdens_transport_latx.load()
-	depth_integrated_pdens_transport_laty = depth_integrated_pdens_transport.copy(deep=True)
-	depth_integrated_pdens_transport_laty.load()
 
-	depth_integrated_x_interp_results = depth_integrated_pdens_transport.copy(deep=True)
-	depth_integrated_x_interp_results.load()
-	depth_integrated_y_interp_results = depth_integrated_pdens_transport.copy(deep=True)
-	depth_integrated_y_interp_results.load()
+	global_depth_integrated_pdens_transport_latx = depth_integrated_pdens_transport.copy(deep=True)
+	global_depth_integrated_pdens_transport_latx.load()
+	global_depth_integrated_pdens_transport_laty = depth_integrated_pdens_transport.copy(deep=True)
+	global_depth_integrated_pdens_transport_laty.load()
 
-	bolus_x_out_transport = depth_integrated_pdens_transport.copy(deep=True)
-	bolus_x_out_transport.load()
-	bolus_y_out_transport = depth_integrated_pdens_transport.copy(deep=True)
-	bolus_y_out_transport.load()
+	atl_depth_integrated_pdens_transport_latx = depth_integrated_pdens_transport.copy(deep=True)
+	atl_depth_integrated_pdens_transport_latx.load()
+	atl_depth_integrated_pdens_transport_laty = depth_integrated_pdens_transport.copy(deep=True)
+	atl_depth_integrated_pdens_transport_laty.load()
 
+	indpac_depth_integrated_pdens_transport_latx = depth_integrated_pdens_transport.copy(deep=True)
+	indpac_depth_integrated_pdens_transport_latx.load()
+	indpac_depth_integrated_pdens_transport_laty = depth_integrated_pdens_transport.copy(deep=True)
+	indpac_depth_integrated_pdens_transport_laty.load()
 
 	for density in pot_dens_coord:
 	    print("Started " + str(density) + " surface for time slice " + str(time_slice)) 
@@ -277,19 +284,32 @@ def perform_potential_density_overturning_calculation(time_slice,PDENS_U_ds,PDEN
 	        print(str(lat)+' ',end='')
 	        lat_maskW, lat_maskS = ecco.vector_calc.get_latitude_masks(lat, cds['YC'], grid_xmitgcm)
 	       
-	        # Sum horizontally
-	        lat_trsp_x = (depth_integrated_trsp_x * lat_maskW).sum(dim=['i_g','j','tile'],skipna=True)
-	        lat_trsp_y = (depth_integrated_trsp_y * lat_maskS).sum(dim=['i','j_g','tile'],skipna=True)
-	        lat_trsp_x_interp = (trsp_interpolated_x * lat_maskW).sum(dim=['i_g','j','tile'],skipna=True)
-	        lat_trsp_y_interp = (trsp_interpolated_y * lat_maskS).sum(dim=['i','j_g','tile'],skipna=True)
-	        
-	        depth_integrated_pdens_transport_latx.loc[{'lat':lat,'pot_rho':density}] = lat_trsp_x
-	        depth_integrated_pdens_transport_laty.loc[{'lat':lat,'pot_rho':density}] = lat_trsp_y
-	        depth_integrated_x_interp_results.loc[{'lat':lat,'pot_rho':density}] = lat_trsp_x_interp
-	        depth_integrated_y_interp_results.loc[{'lat':lat,'pot_rho':density}] = lat_trsp_y_interp
+	        # Global Ocean
+	        global_lat_trsp_x = (depth_integrated_trsp_x * lat_maskW).sum(dim=['i_g','j','tile'],skipna=True)
+	        global_lat_trsp_y = (depth_integrated_trsp_y * lat_maskS).sum(dim=['i','j_g','tile'],skipna=True)	        
+	        global_depth_integrated_pdens_transport_latx.loc[{'lat':lat,'pot_rho':density}] = global_lat_trsp_x
+	        global_depth_integrated_pdens_transport_laty.loc[{'lat':lat,'pot_rho':density}] = global_lat_trsp_y
+
+	        # Atlantic and Southern Ocean
+	        atl_lat_trsp_x = (depth_integrated_trsp_x * lat_maskW * so_atl_basin_mask_W).sum(dim=['i_g','j','tile'],skipna=True)
+	        atl_lat_trsp_y = (depth_integrated_trsp_y * lat_maskS * so_atl_basin_mask_S).sum(dim=['i','j_g','tile'],skipna=True)
+	        atl_depth_integrated_pdens_transport_latx.loc[{'lat':lat,'pot_rho':density}] = atl_lat_trsp_x
+	        atl_depth_integrated_pdens_transport_laty.loc[{'lat':lat,'pot_rho':density}] = atl_lat_trsp_y
+
+	        # Pacific and Southern OCean
+	        indpac_lat_trsp_x = (depth_integrated_trsp_x * lat_maskW * so_indpac_basin_mask_W).sum(dim=['i_g','j','tile'],skipna=True)
+	        indpac_lat_trsp_y = (depth_integrated_trsp_y * lat_maskS * so_indpac_basin_mask_S).sum(dim=['i','j_g','tile'],skipna=True)
+	        indpac_depth_integrated_pdens_transport_latx.loc[{'lat':lat,'pot_rho':density}] = indpac_lat_trsp_x
+	        indpac_depth_integrated_pdens_transport_laty.loc[{'lat':lat,'pot_rho':density}] = indpac_lat_trsp_y
 
 	    print("\n")
 	    
 	    
-	return depth_integrated_pdens_transport_latx, depth_integrated_pdens_transport_laty, depth_integrated_x_interp_results, depth_integrated_y_interp_results
+	return global_depth_integrated_pdens_transport_latx, global_depth_integrated_pdens_transport_laty, atl_depth_integrated_pdens_transport_latx, atl_depth_integrated_pdens_transport_laty, indpac_depth_integrated_pdens_transport_latx, indpac_depth_integrated_pdens_transport_laty
 	# depth_integrated_pdens.to_netcdf("./depth_integrated_pdens_TEST11.nc")
+
+
+
+
+
+
