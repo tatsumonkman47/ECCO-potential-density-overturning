@@ -338,7 +338,7 @@ def world_north_vel_plot(uveldataset, vveldataset, label_tiles=True,ticks_on=Fal
 
 
 def overturning_output_plots(depth_integrated_pdens_transport_latx, depth_integrated_pdens_transport_laty, 
-							 depth_integrated_x_interp_results,depth_integrated_y_interp_results,time_slice,
+							 time_slice,
 							 basin_name):
 
 	min_lat = 0
@@ -369,40 +369,7 @@ def overturning_output_plots(depth_integrated_pdens_transport_latx, depth_integr
 	plt.savefig("./figures/"+basin_name+"_overturning_with_interp"+str(time_slice[0])+"to"+str(time_slice[-1])+".png")
 	plt.close()
 
-	plt.figure(figsize=(20,10))
-	plt.contourf(depth_integrated_pdens_transport_laty.lat[min_lat:max_lat],
-	             depth_integrated_pdens_transport_laty.pot_rho[1:],
-	             -1*depth_integrated_pdens_transport_latx.mean(dim='time')[1:,min_lat:max_lat] -1*depth_integrated_pdens_transport_laty.mean(dim='time')[1:,min_lat:max_lat]    
-	             -(-1*depth_integrated_x_interp_results.mean(dim='time')[1:,min_lat:max_lat]-1*depth_integrated_y_interp_results.mean(dim='time')[1:,min_lat:max_lat]),
-	             30,
-	             cmap='bwr',
-	             vmin=pvmin,
-	             vmax=pvmax)
-	cbar = plt.colorbar()
-	plt.title("Meridional overturning results without interpolation",fontname='Times New Roman',fontsize=24)
-	plt.xlabel("Latitude (deg)",fontname='Times New Roman',fontsize=16)
-	plt.ylabel("$\sigma_{2}$ (kg/m^3)",fontname='Times New Roman',fontsize=16)
-	cbar.set_label("Transport (Sv)",fontname='Times New Roman',fontsize=16,rotation=270)
-	plt.grid()
-	plt.gca().invert_yaxis()
-	plt.savefig("./figures/"+basin_name+"_overturning_NO_interp"+str(time_slice[0])+"to"+str(time_slice[-1])+".png")
-	plt.close()
 
 
-	plt.figure(figsize=(20,10))
-	plt.contourf(depth_integrated_pdens_transport_laty.lat[min_lat:max_lat],
-	             depth_integrated_pdens_transport_laty.pot_rho[1:],
-	             -(-1*depth_integrated_x_interp_results.mean(dim='time')[1:,min_lat:max_lat]-1*depth_integrated_y_interp_results.mean(dim='time')[1:,min_lat:max_lat]),
-	             30,
-	             cmap='bwr',
-	             vmin=pvmin,
-	             vmax=pvmax)
-	cbar = plt.colorbar()
-	cbar.set_label("Transport (Sv)",rotation=270)
-	plt.title("Interpolation correction values",fontname='Times New Roman',fontsize=24)
-	plt.xlabel("Latitude (deg)",fontname='Times New Roman',fontsize=16)
-	plt.ylabel("$\sigma_{2}$ (kg/m^3)",fontname='Times New Roman',fontsize=16)
-	plt.grid()
-	plt.gca().invert_yaxis()
-	plt.savefig("./figures/"+basin_name+"_overturning_interp_Correction"+str(time_slice[0])+"to"+str(time_slice[-1])+".png")
-	plt.close()
+
+	
