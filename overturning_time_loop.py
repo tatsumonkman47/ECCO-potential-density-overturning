@@ -43,7 +43,7 @@ print("loaded grid")
 
 
 time_slice = []
-for i in range(0,12):
+for i in range(12,24):
     time_slice.append(np.arange(i*12,(i+1)*12))
 
 for t_slice in time_slice:
@@ -83,19 +83,19 @@ for t_slice in time_slice:
     # set data file indecies starting from zero.
     PDENS_V_ds = PDENS_V_ds_raw.assign_coords(i=np.arange(0,90),j_g=np.arange(0,90),k=np.arange(0,50))
 
-    global_depth_integrated_pdens_transport_latx, global_depth_integrated_pdens_transport_laty, atl_depth_integrated_pdens_transport_latx, atl_depth_integrated_pdens_transport_laty, indpac_depth_integrated_pdens_transport_latx, indpac_depth_integrated_pdens_transport_laty = potential_density_overturning.perform_potential_density_overturning_calculation(t_slice,PDENS_U_ds,PDENS_V_ds,UVELMASS_ds_raw,VVELMASS_ds_raw,
+    atl_depth_integrated_pdens_transport_latx, atl_depth_integrated_pdens_transport_laty = potential_density_overturning.perform_potential_density_overturning_calculation(t_slice,PDENS_U_ds,PDENS_V_ds,UVELMASS_ds_raw,VVELMASS_ds_raw,
                                                                                                                                                GM_PSIX_ds_raw, GM_PSIY_ds_raw)
 
     atl_depth_integrated_pdens_transport_latx.to_netcdf("./overturning_output/atl_so_depth_integrated_pdens_transport_latx_"+str(t_slice[0])+"_to_"+str(t_slice[-1])+".nc")
     atl_depth_integrated_pdens_transport_laty.to_netcdf("./overturning_output/atl_so_depth_integrated_pdens_transport_laty_"+str(t_slice[0])+"_to_"+str(t_slice[-1])+".nc")
-    plotting_functions.overturning_output_plots(atl_depth_integrated_pdens_transport_latx, atl_depth_integrated_pdens_transport_laty,"atl_so")
+    plotting_functions.overturning_output_plots(atl_depth_integrated_pdens_transport_latx, atl_depth_integrated_pdens_transport_laty,t_slice,"atl_so")
     
-    indpac_depth_integrated_pdens_transport_latx.to_netcdf("./overturning_output/indpac_so_depth_integrated_pdens_transport_latx_"+str(t_slice[0])+"_to_"+str(t_slice[-1])+".nc")
-    indpac_depth_integrated_pdens_transport_laty.to_netcdf("./overturning_output/indpac_so_depth_integrated_pdens_transport_laty_"+str(t_slice[0])+"_to_"+str(t_slice[-1])+".nc")
-    plotting_functions.overturning_output_plots(indpac_depth_integrated_pdens_transport_latx, indpac_depth_integrated_pdens_transport_laty,"indpac_so")
+    #indpac_depth_integrated_pdens_transport_latx.to_netcdf("./overturning_output/indpac_so_depth_integrated_pdens_transport_latx_"+str(t_slice[0])+"_to_"+str(t_slice[-1])+".nc")
+    #indpac_depth_integrated_pdens_transport_laty.to_netcdf("./overturning_output/indpac_so_depth_integrated_pdens_transport_laty_"+str(t_slice[0])+"_to_"+str(t_slice[-1])+".nc")
+    #plotting_functions.overturning_output_plots(indpac_depth_integrated_pdens_transport_latx, indpac_depth_integrated_pdens_transport_laty,t_slice,"indpac_so")
     
-    global_depth_integrated_pdens_transport_latx.to_netcdf("./overturning_output/global_depth_integrated_pdens_transport_latx_"+str(t_slice[0])+"_to_"+str(t_slice[-1])+".nc")
-    global_depth_integrated_pdens_transport_laty.to_netcdf("./overturning_output/global_depth_integrated_pdens_transport_laty_"+str(t_slice[0])+"_to_"+str(t_slice[-1])+".nc")
-    plotting_functions.overturning_output_plots(global_depth_integrated_pdens_transport_latx, global_depth_integrated_pdens_transport_laty,"global")
+    #global_depth_integrated_pdens_transport_latx.to_netcdf("./overturning_output/global_depth_integrated_pdens_transport_latx_"+str(t_slice[0])+"_to_"+str(t_slice[-1])+".nc")
+    #global_depth_integrated_pdens_transport_laty.to_netcdf("./overturning_output/global_depth_integrated_pdens_transport_laty_"+str(t_slice[0])+"_to_"+str(t_slice[-1])+".nc")
+    #plotting_functions.overturning_output_plots(global_depth_integrated_pdens_transport_latx, global_depth_integrated_pdens_transport_laty,t_slice,"global")
    
     print()
